@@ -245,6 +245,103 @@ indice_onde_tab %>%
   flextable::border_inner_v(part="all", border = flextable::fp_border_default(color="gray", width = 1) )
 ```
 
+#### Historique de variation de l'indice ONDE du mois en cours (sur les campagnes usuelles)
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ondetools)
+
+# 1. Chargement et calcul des indices ONDE
+chemin_data <- "C:/Users/baptiste.roussel/Desktop/Gestion quantitative/ONDE/R_rapports_mensuels/graph_59/raw_data"
+load(file.path(chemin_data, "onde_df.RData"))
+
+indices_df <- calculer_indice_onde(onde_df = onde_df, force_complementaire = FALSE)
+
+# 2. Préparation des données
+onde_traite <- indices_df %>%
+  mutate(
+    date_ref = as.Date(date_campagne),
+    Annee    = year(date_ref),
+    Mois     = month(date_ref)
+  )
+
+# 3. Moyenne interannuelle
+moyenne_interannuelle <- onde_traite %>%
+  group_by(Mois) %>%
+  summarise(indice_moyen = mean(indice, na.rm = TRUE), .groups = "drop")
+
+# 4. Filtrage ET Agrégation (Garantit 1 seule valeur par année)
+mois_cible <- 8
+
+df_plot <- onde_traite %>%
+  filter(Mois == mois_cible) %>%
+  group_by(Annee) %>%
+  summarise(indice = mean(indice, na.rm = TRUE), .groups = "drop") %>% # Élimine les doublons d'une même année
+  mutate(Mois = mois_cible) %>%
+  left_join(moyenne_interannuelle %>% filter(Mois == mois_cible), by = "Mois") %>%
+  mutate(
+    # Étiquette remplie uniquement pour l'année maximale
+    etiquette_derniere = ifelse(Annee == max(Annee), sprintf("%.1f", indice), NA_character_)
+  )
+
+# Extraction de la moyenne
+valeur_moyenne <- round(unique(df_plot$indice_moyen), 2)
+y_min <- floor(min(c(df_plot$indice, valeur_moyenne), na.rm = TRUE))
+
+# 5. Graphique
+ggplot(df_plot, aes(x = Annee)) +
+  geom_line(aes(y = indice, color = "Indice ONDE"), linewidth = 1) +
+  geom_point(aes(y = indice, color = "Indice ONDE"), size = 2.5) +
+  geom_line(aes(y = indice_moyen, color = "Indice moyen"), linetype = "dashed", linewidth = 1) +
+  
+  # Affiche uniquement l'étiquette non-NA (2025)
+  geom_text(
+    aes(y = indice, label = etiquette_derniere),
+    vjust = 1.8,
+    color = "#1F77B4",
+    fontface = "bold",
+    size = 4,
+    na.rm = TRUE
+  ) +
+  
+  coord_cartesian(
+    xlim = range(df_plot$Annee),
+    ylim = c(y_min - 0.3, 10)
+  ) +
+  scale_x_continuous(breaks = seq(min(df_plot$Annee), max(df_plot$Annee), by = 1)) +
+  scale_y_continuous(
+    breaks = sort(unique(c(seq(y_min, 10, by = 1), valeur_moyenne)))
+  ) +
+  
+  scale_color_manual(
+    values = c("Indice ONDE" = "#1F77B4", "Indice moyen" = "#E41A1C"),
+    name = ""
+  ) +
+  
+  labs(
+    title = paste0("Indice ONDE mensuel - Mois ", sprintf("%02d", mois_cible), " (Campagnes usuelles)"),
+    x = "Année",
+    y = "Indice ONDE"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(
+      face = "bold",
+      color = ifelse(
+        sort(unique(c(seq(y_min, 10, by = 1), valeur_moyenne))) == valeur_moyenne, 
+        "#E41A1C", 
+        "black"
+      )
+    ),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
 \newpage
 
 ## Historique des types d'écoulement

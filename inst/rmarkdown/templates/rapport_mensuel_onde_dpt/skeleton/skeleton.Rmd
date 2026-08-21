@@ -1,4 +1,4 @@
----
+Voici le code R Markdown complet regroupant toutes les corrections et optimisations. Tu n'as plus qu'à copier-coller l'intégralité du bloc ci-dessous dans ton fichier skeleton.Rmd.  Markdown---
 title: "Bilan mensuel ONDE  \nObservatoire national des étiages  \nDépartement `r params$code_departement`"
 author: "OFB, DR `r params$region_dr`"
 date: "Campagne `r params$type_rapport` de `r params$mois_rapport`  \nrapport créé le `r format(Sys.time(), '%d %B %Y')`"
@@ -15,23 +15,33 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, 
-                      warning=FALSE, 
-                      message=FALSE)
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE)
 knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
-options(warn=-1)
+options(warn = -1)
 
 if(!require("tidyverse")) install.packages('tidyverse')
 if(!require("patchwork")) install.packages('patchwork')
 if(!require("flextable")) install.packages('flextable')
 if(!require("magick")) install.packages('magick')
 if(!require("COGiter")) devtools::install_github("MaelTheuliere/COGiter")
-\newpageRappels réseau ONDE : informations générales pour le déroulement des campagnes d'acquisition de donnéesLes stations d'observations du réseau ONDE sont majoritairement positionnées en tête de bassin pour apporter de l'information sur les situations hydrographiques non couvertes par d'autres dispositifs existants (banque HYDRO et ADES par exemple). Environ 30 stations compose le réseau de chaque département.Le réseau ONDE s'organise selon deux types de suivis : (i) un suivi usuel (au milieu de chaque dernière décade du mois, le 25 ± 2 jours, entre fin mai et fin septembre), et (ii) un suivi complémentaire (déclenché selon la situation locale, jugée potentiellement sensible, à l'initiative des acteurs locaux).Sur le terrain, la situation d'écoulement des cours d'eau est appréciée visuellement selon plusieurs modalités d'observation avec la typologie nationale :Ecoulement visible: correspond à une station présentant un écoulement continu -- écoulement permanent et visible à l'œil nu.Ecoulement non visible: correspond à une station sur laquelle le lit mineur présente toujours de l'eau mais le débit est nul.Assec: correspond à une station à sec, où l'eau est totalement évaporée ou infiltrée sur plus de 50% de la station.Une autre modalité - Ecoulement visible faible - est parfois utilisée sur le terrain (distinction avec la modalité Ecoulement visible acceptable). Elle apparaît dans la typologie départementale ; et correspond à une station sur laquelle il y a de l'eau et un courant visible, mais le débit faible ne garantit pas un fonctionnement biologique.A noter que la modalité observation impossible peut également être renseignée, dès lors que l'observation n'a pu être réalisée correctement en raison de conditions exceptionnelles (problèmes d'accessibilité, modification des conditions environnementales de la station, etc ...).Pour plus d'informations : Lien réseau ONDE (http://onde.eaufrance.fr).Nombre de stations ONDE dans le département r params$code_departementExtrait de code## 
-onde_df <- params$onde_df %>% 
+if(!require("ondetools")) devtools::install_github("broussel59/ondetools")
+
+library(tidyverse)
+library(lubridate)
+library(ondetools)
+
+# Calcul global unique des indices ONDE pour tout le document
+indices_df <- ondetools::calculer_indice_onde(
+  onde_df = params$onde_df, 
+  force_complementaire = FALSE
+)
+\newpageRappels réseau ONDEInformations générales pour le déroulement des campagnes d'acquisition de données.Les stations d'observations du réseau ONDE sont majoritairement positionnées en tête de bassin pour apporter de l'information sur les situations hydrographiques non couvertes par d'autres dispositifs existants (banque HYDRO et ADES par exemple). Environ 30 stations composent le réseau de chaque département.Le réseau ONDE s'organise selon deux types de suivis :Un suivi usuel (au milieu de chaque dernière décade du mois, le 25 ± 2 jours, entre fin mai et fin septembre) ;Un suivi complémentaire (déclenché selon la situation locale, jugée potentiellement sensible, à l'initiative des acteurs locaux).Sur le terrain, la situation d'écoulement des cours d'eau est appréciée visuellement selon plusieurs modalités d'observation avec la typologie nationale :Écoulement visible : correspond à une station présentant un écoulement continu — écoulement permanent et visible à l'œil nu.Écoulement non visible : correspond à une station sur laquelle le lit mineur présente toujours de l'eau mais le débit est nul.Assec : correspond à une station à sec, où l'eau est totalement évaporée ou infiltrée sur plus de 50% de la station.Une autre modalité — Écoulement visible faible — est parfois utilisée sur le terrain (distinction avec la modalité Écoulement visible acceptable). Elle apparaît dans la typologie départementale et correspond à une station sur laquelle il y a de l'eau et un courant visible, mais le débit faible ne garantit pas un fonctionnement biologique.À noter que la modalité Observation impossible peut également être renseignée dès lors que l'observation n'a pu être réalisée correctement en raison de conditions exceptionnelles (problèmes d'accessibilité, modification des conditions environnementales de la station, etc.).Pour plus d'informations : Site du réseau ONDE.Nombre de stations ONDE dans le département r params$code_departementExtrait de codeonde_df <- params$onde_df %>% 
   dplyr::filter(code_departement == params$code_departement) %>% 
   dplyr::mutate(code_campagne = as.numeric(code_campagne))
 
-### prétraitement sur le département
+### Prétraitement sur le département
 nb_stations <- params$onde_df %>% 
   dplyr::filter(code_departement == params$code_departement & libelle_type_campagne == 'usuelle') %>% 
   dplyr::mutate(code_campagne = as.numeric(code_campagne)) %>% 
@@ -60,12 +70,11 @@ date_derniere_campagne_compl <- params$onde_df %>%
 
 date_derniere_campagne_compl <- format(date_derniere_campagne_compl, '%d/%m/%Y')
 
-### tableau pour le mois en cours selectionné
+### Tableau pour le mois en cours sélectionné
 mois_sel <- format(lubridate::ym(annee_mois), "%m")
 annee_sel <- format(lubridate::ym(annee_mois), "%Y")
 
-onde_df_mois <-
-  params$onde_df %>% 
+onde_df_mois <- params$onde_df %>% 
   dplyr::filter(code_departement == params$code_departement) %>% 
   dplyr::mutate(Mois = format(as.Date(date_campagne), "%m")) %>% 
   dplyr::mutate(date_campagne = as.Date(date_campagne)) %>%
@@ -73,32 +82,26 @@ onde_df_mois <-
   dplyr::filter(Mois == mois_sel & Annee == annee_sel) %>% 
   dplyr::filter(code_campagne == max(as.numeric(code_campagne)))
 
-### dpt shape
-dptFR <-
-  COGiter::departements_geo %>%
-  dplyr::left_join(COGiter::departements %>%
-                     dplyr::select(DEP, REG, NOM_DEP)) %>% 
+### Emprise départementale
+dptFR <- COGiter::departements_geo %>%
+  dplyr::left_join(COGiter::departements %>% dplyr::select(DEP, REG, NOM_DEP)) %>% 
   sf::st_transform(crs = 2154)
 
-
-### tableau pour les bilans du type d'écoulement
-onde_bilan_ecoulement_annee_nat <-
-  params$onde_df %>%
+### Bilan du type d'écoulement
+onde_bilan_ecoulement_annee_nat <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   dplyr::filter(code_campagne <= unique(onde_df_mois$code_campagne)) %>% 
   calculer_bilan_ecoulement(onde_df = .,
                             mod = lib_ecoul,
                             mod_levels = c("Ecoulement visible",
-                                           #"Ecoulement visible faible",
                                            "Ecoulement non visible",
                                            "Assec",
                                            "Observation impossible",
                                            "Donnée manquante"),
                             referentiel_onde = "Typologie nationale",
-                            force_complementaire = T)
+                            force_complementaire = TRUE)
 
-onde_bilan_ecoulement_annee_dpt <-
-  params$onde_df %>%
+onde_bilan_ecoulement_annee_dpt <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   dplyr::filter(code_campagne <= unique(onde_df_mois$code_campagne)) %>% 
   calculer_bilan_ecoulement(onde_df = .,
@@ -110,152 +113,63 @@ onde_bilan_ecoulement_annee_dpt <-
                                            "Observation impossible",
                                            "Donnée manquante"),
                             referentiel_onde = "Typologie départementale",
-                            force_complementaire = T)
-Actuellement, le département r params$code_departement est couvert par r nb_stations stations d'observations.Pour le département, les dernières campagnes :usuelles ont été réalisées le : r date_derniere_campagne_usuelle ;complémentaires ont été réalisées le : r date_derniere_campagne_compl.Situation à l'échelle départementale pour le mois en coursLes cartes ci-dessous présentent les situations observées sur les stations du département r params$code_departement pour la campagne r params$type_rapport du mois de r params$mois_rapport.Typologie nationaleLes modalités d'écoulement de la typologie nationale peuvent prendre les valeurs suivantes: écoulement visible, écoulement non visible, assec, ou observation impossible.Extrait de codeproduire_carte_statique(code_departement = params$code_departement,
+                            force_complementaire = TRUE)
+Actuellement, le département r params$code_departement est couvert par r nb_stations stations d'observation.Pour le département, les dernières campagnes :Usuelles ont été réalisées le : r date_derniere_campagne_usuelle ;Complémentaires ont été réalisées le : r date_derniere_campagne_compl.\newpageSituation à l'échelle départementale pour le mois en coursLes cartes ci-dessous présentent les situations observées sur les stations du département r params$code_departement pour la campagne r params$type_rapport du mois de r params$mois_rapport.Typologie nationaleLes modalités d'écoulement de la typologie nationale peuvent prendre les valeurs suivantes : écoulement visible, écoulement non visible, assec, ou observation impossible.Extrait de codeproduire_carte_statique(code_departement = params$code_departement,
                         onde_df_mois = onde_df_mois,
                         referentiel_onde = 'Typologie nationale',
                         couleurs = onde_4mod,
                         dptFR_shp = dptFR)
-
 Extrait de codeproduire_graph_type_ecoulement(data_bilan = onde_bilan_ecoulement_annee_nat,
                                lib_ecoulement = lib_ecoul,
-                               historique = F) +
-  ggplot2::labs(title= glue::glue("Types d'écoulement de l'année - département {params$code_departement}")) + ggplot2::theme(legend.position = 'none')
-
-\newpage  Typologie départementale  Les modalités d'écoulement de la typologie départementale correspondent à : écoulement visible acceptable, écoulement visible faible, écoulement non visible, assec, ou observation impossible.  Extrait de codeproduire_carte_statique(code_departement = params$code_departement,
+                               historique = FALSE) +
+  ggplot2::labs(title = glue::glue("Types d'écoulement de l'année - département {params$code_departement}")) + 
+  ggplot2::theme(legend.position = 'none')
+\newpageTypologie départementaleLes modalités d'écoulement de la typologie départementale correspondent à : écoulement visible acceptable, écoulement visible faible, écoulement non visible, assec, ou observation impossible.Extrait de codeproduire_carte_statique(code_departement = params$code_departement,
                         onde_df_mois = onde_df_mois,
                         referentiel_onde = 'Typologie départementale',
                         couleurs = onde_5mod,
                         dptFR_shp = dptFR)
-
 Extrait de codeproduire_graph_type_ecoulement(data_bilan = onde_bilan_ecoulement_annee_dpt,
                                lib_ecoulement = lib_ecoul,
-                               historique = F) +
-  ggplot2::labs(title= glue::glue("Types d'écoulement de l'année - département {params$code_departement}")) +
+                               historique = FALSE) +
+  ggplot2::labs(title = glue::glue("Types d'écoulement de l'année - département {params$code_departement}")) +
   ggplot2::theme(legend.position = 'none')
-\newpage  Analyse pluriannuelle à l'échelle départementale  Indices ONDE  Pour chaque campagne usuelle, un indice ONDE peut être calculé selon la formule suivante :  $$\text{Indice ONDE} = \frac{( 5 \times N2 + 10 \times N1)}{N}$$avec :  N : nombre total de stations ;  N1 : écoulement continu ;  N2 : écoulement interrompu.  ⚠ Les indices ONDE des campagnes complémentaires calculés ci-dessous sont présentés à titre indicatif. Seules les campagnes usuelles permettent le calcul de cet indice. Ici, ils ont été calculés pour les complémentaires dès lors qu'un nombre suffisant de stations le permettait.  Historique de variation de l'indice ONDE (par mois et campagnes)  Extrait de codeindice_onde_tab <- 
-  params$onde_df %>% 
+\newpageAnalyse pluriannuelle à l'échelle départementaleIndices ONDEPour chaque campagne usuelle, un indice ONDE peut être calculé selon la formule suivante :$$\text{Indice ONDE} = \frac{(5 \times N2 + 10 \times N1)}{N}$$avec :$N$ : nombre total de stations ;$N1$ : écoulement continu ;$N2$ : écoulement interrompu.⚠ Remarque : Les indices ONDE des campagnes complémentaires calculés ci-dessous sont présentés à titre indicatif. Seules les campagnes usuelles permettent le calcul officiel de cet indice. Ici, ils ont été calculés pour les complémentaires dès lors qu'un nombre suffisant de stations le permettait.Historique de variation de l'indice ONDE (par mois et campagnes)Extrait de codeindice_onde_tab <- params$onde_df %>% 
   dplyr::filter(code_departement == params$code_departement) %>% 
-  ondetools::calculer_indice_onde(onde_df = ., force_complementaire = T)
+  ondetools::calculer_indice_onde(onde_df = ., force_complementaire = TRUE)
 
 indice_onde_tab %>% 
-  ungroup() %>% 
+  dplyr::ungroup() %>% 
   dplyr::select(date_campagne, Annee, indice, libelle_type_campagne) %>% 
   dplyr::arrange(date_campagne) %>% 
   dplyr::mutate(Mois = format(date_campagne, "%m"),
-         Mois_c = paste(Mois, substr(libelle_type_campagne,1,4),sep = "_")) %>% 
+                Mois_c = paste(Mois, substr(libelle_type_campagne, 1, 4), sep = "_")) %>% 
   dplyr::select(-date_campagne, -libelle_type_campagne, -Mois) %>% 
   dplyr::mutate(Annee = as.character(Annee)) %>% 
   dplyr::filter(!is.na(indice)) %>% 
   dplyr::rename("Années" = 'Annee') %>% 
-  tidyr::pivot_wider(names_from = Mois_c, values_from = indice, names_sort = T, values_fn = toString) %>% 
-  flextable::flextable() |> 
-  flextable::separate_header() |> 
-  #flextable::autofit() %>% 
+  tidyr::pivot_wider(names_from = Mois_c, values_from = indice, names_sort = TRUE, values_fn = toString) %>% 
+  flextable::flextable() %>% 
+  flextable::separate_header() %>% 
   flextable::align(align = "center", part = "all") %>% 
-  #flextable::colformat_double(digits = 1) %>% 
   flextable::bold(part = 'header', i = 1) %>% 
   flextable::bold(part = "body", j = 1) %>%
   flextable::italic(part = 'header', i = 2) %>% 
-  flextable::fontsize(size=8.5, part = c("all")) %>% 
+  flextable::fontsize(size = 8.5, part = "all") %>% 
   flextable::width(width = 0.5) %>% 
-  flextable::border_inner_v(part="all", border = flextable::fp_border_default(color="gray", width = 1) )
-Historique de variation de l'indice ONDE du mois en cours (sur les campagnes usuelles)Extrait de codelibrary(tidyverse)
-library(lubridate)
-library(ondetools)
-
-# 0) Choisir ses départements
-mes_dpts <- c('59')
-
-# 1. Chargement et calcul des indices ONDE
-
-onde_df <- telecharger_donnees_onde_api(dpt = mes_dpts)
-
-indices_df <- calculer_indice_onde(onde_df = onde_df, force_complementaire = FALSE)
-
-# 2. Préparation des données
-onde_traite <- indices_df %>%
-  mutate(
-    date_ref = as.Date(date_campagne),
-    Annee    = year(date_ref),
-    Mois     = month(date_ref)
-  )
-
-# 3. Moyenne interannuelle
-moyenne_interannuelle <- onde_traite %>%
-  group_by(Mois) %>%
-  summarise(indice_moyen = mean(indice, na.rm = TRUE), .groups = "drop")
-
-# 4. Filtrage ET Agrégation (Garantit 1 seule valeur par année)
-mois_cible <- 8
-
-df_plot <- onde_traite %>%
-  filter(Mois == mois_cible) %>%
-  group_by(Annee) %>%
-  summarise(indice = mean(indice, na.rm = TRUE), .groups = "drop") %>% # Élimine les doublons d'une même année
-  mutate(Mois = mois_cible) %>%
-  left_join(moyenne_interannuelle %>% filter(Mois == mois_cible), by = "Mois") %>%
-  mutate(
-    # Étiquette remplie uniquement pour l'année maximale
-    etiquette_derniere = ifelse(Annee == max(Annee), sprintf("%.1f", indice), NA_character_)
-  )
-
-# Extraction de la moyenne
-valeur_moyenne <- round(unique(df_plot$indice_moyen), 2)
-y_min <- floor(min(c(df_plot$indice, valeur_moyenne), na.rm = TRUE))
-
-# 5. Graphique
-ggplot(df_plot, aes(x = Annee)) +
-  geom_line(aes(y = indice, color = "Indice ONDE"), linewidth = 1) +
-  geom_point(aes(y = indice, color = "Indice ONDE"), size = 2.5) +
-  geom_line(aes(y = indice_moyen, color = "Indice moyen"), linetype = "dashed", linewidth = 1) +
-  
-  # Affiche uniquement l'étiquette non-NA (2025)
-  geom_text(
-    aes(y = indice, label = etiquette_derniere),
-    vjust = 1.8,
-    color = "#1F77B4",
-    fontface = "bold",
-    size = 4,
-    na.rm = TRUE
-  ) +
-  
-  coord_cartesian(
-    xlim = range(df_plot$Annee),
-    ylim = c(y_min - 0.3, 10)
-  ) +
-  scale_x_continuous(breaks = seq(min(df_plot$Annee), max(df_plot$Annee), by = 1)) +
-  scale_y_continuous(
-    breaks = sort(unique(c(seq(y_min, 10, by = 1), valeur_moyenne)))
-  ) +
-  
-  scale_color_manual(
-    values = c("Indice ONDE" = "#1F77B4", "Indice moyen" = "#E41A1C"),
-    name = ""
-  ) +
-  
-  labs(
-    title = paste0("Indice ONDE mensuel - Mois ", sprintf("%02d", mois_cible), " (Campagnes usuelles)"),
-    x = "Année",
-    y = "Indice ONDE"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    axis.text.y = element_text(
-      face = "bold",
-      color = ifelse(
-        sort(unique(c(seq(y_min, 10, by = 1), valeur_moyenne))) == valeur_moyenne, 
-        "#E41A1C", 
-        "black"
-      )
-    ),
-    panel.grid.minor = element_blank()
-  )
-\newpage  Historique des types d'écoulement  Les pourcentages de chaque type d'écoulement selon la typologie départementale sont présentés ci-dessous par années, mois et campagnes (usuelles usue et complémentaires comp).  Extrait de codeonde_bilan_ecoulement_historique <-
-  params$onde_df %>%
+  flextable::border_inner_v(part = "all", border = flextable::fp_border_default(color = "gray", width = 1))
+\newpageHistorique de variation de l'indice ONDE du mois en cours (campagnes usuelles)Extrait de codeondetools::produire_graph_indice_mensuel(
+  onde_df = params$onde_df,
+  code_dpt = params$code_departement,
+  mois_cible = as.numeric(params$mois_rapport),
+  force_complementaire = FALSE
+)
+Profil saisonnier et distribution historique de l'indice ONDEExtrait de codeondetools::produire_graph_distribution_saisonniere(
+  indices_df = indices_df,
+  code_dpt = params$code_departement,
+  annee_choisie = as.numeric(params$annee_rapport)
+)
+\newpageHistorique des types d'écoulementLes pourcentages de chaque type d'écoulement selon la typologie départementale sont présentés ci-dessous par années, mois et campagnes (usuelles usue et complémentaires comp).Extrait de codeonde_bilan_ecoulement_historique <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   calculer_bilan_ecoulement(onde_df = .,
                             mod = lib_ecoul,
@@ -266,72 +180,62 @@ ggplot(df_plot, aes(x = Annee)) +
                                            "Observation impossible",
                                            "Donnée manquante"),
                             referentiel_onde = "Typologie départementale",
-                            force_complementaire = T) %>% 
+                            force_complementaire = TRUE) %>% 
   dplyr::mutate(Label_p = gsub(x = Label_p, '%', replacement = ''))
 
 produire_graph_type_ecoulement(data_bilan = onde_bilan_ecoulement_historique,
                                lib_ecoulement = lib_ecoul,
-                               historique = T) +
+                               historique = TRUE) +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, size = 7, hjust = 1))
-\newpageHistorique des assecsL'historique des assecs peut être appréhender avec les 3 graphiques suivants :Le graphique a) permet de visualiser simultanément la fréquence des assecs sur la période estivale (de mai à septembre inclus) en fonction des années. Le pourcentage de stations d'observation en assec est calculé par le rapport entre le nombre de stations ayant la modalité assec et le nombre de stations observées dans le mois.Le graphique b) permet de visualiser la moyenne annuelle des stations en assecs (c.a.d les variations interannuelles).Le graphique c) illustre la durée des assecs pour les stations du département sur la période estivale (de mai à septembre inclus). La durée des assecs pour une station est calculée selon le nombre de mois consécutifs où des observations avec la modalité assec est rapportée. La plus grande séquence d'observation en assec est gardée pour le calcul de la durée (rq. entre observations successives, l'écoulement peut revenir visible). Ainsi, les durées en assec peuvent aller de 0 mois (c.à.d. des écoulements toujours visibles et consécutivement observés sur la période estivale) à 5 mois (c.à.d.  des assecs toujours observés sur la période estivale). Le pourcentage représenté par chaque classe de durée est calculé pour chaque année d'observation.Extrait de code
-partA <-
-## graph a)
-params$onde_df %>%
+\newpageHistorique des assecsL'historique des assecs peut être appréhendé avec les 3 graphiques suivants :Graphique a) : Fréquence des assecs sur la période estivale (de mai à septembre inclus) en fonction des années. Le pourcentage de stations en assec est calculé par le rapport entre le nombre de stations en assec et le nombre de stations observées dans le mois.Graphique b) : Moyenne annuelle des stations en assec (variations interannuelles).Graphique c) : Durée des assecs pour les stations du département sur la période estivale (de mai à septembre inclus). La durée pour une station correspond au nombre de mois consécutifs où la modalité assec est rapportée (de 0 à 5 mois).Extrait de codepartA <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   calculer_assecs_heatmap(onde_df = .) %>% 
-  produire_graph_heatmap_assecs(heatmap_df = ., autoscale = T)
+  produire_graph_heatmap_assecs(heatmap_df = ., autoscale = TRUE)
 
-partB <-
-## graph b)
-params$onde_df %>%
+partB <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   calculer_assecs_heatmap(onde_df = .) %>% 
   dplyr::group_by(Annee) %>% 
-  dplyr::summarise(pc_assec_usuelles = mean(pourcentage_assecs, na.rm = T)/100) %>% 
+  dplyr::summarise(pc_assec_usuelles = mean(pourcentage_assecs, na.rm = TRUE) / 100) %>% 
   {
-    ggplot2::ggplot(data = .,
-                    aes(x = Annee, y = pc_assec_usuelles)) +
+    ggplot2::ggplot(data = ., aes(x = Annee, y = pc_assec_usuelles)) +
       ggplot2::geom_line(col = "#c20000") +
-      ggplot2::geom_point(fill = "#c20000", pch= 21, size=3) +
-      ggplot2::labs(x = "Années",
-                    y = "Pourcentage") +
+      ggplot2::geom_point(fill = "#c20000", pch = 21, size = 3) +
+      ggplot2::labs(x = "Années", y = "Pourcentage") +
       ggplot2::scale_y_continuous(limits = c(0, max(.$pc_assec_usuelles) + 0.03), 
-                                  labels= scales::percent_format(1)) +
+                                  labels = scales::percent_format(1)) +
       ggplot2::scale_x_continuous(breaks = scales::breaks_width(1)) +
       ggplot2::labs(title = "Proportion moyenne annuelle des stations en assecs") +
       ggplot2::theme_bw() +
-      ggplot2::theme(title = ggplot2::element_text(size = 9,face = 'bold'), 
-                     axis.text.x = ggplot2::element_text(size=9, angle = 45, hjust = 1),
-                     axis.text.y = ggplot2::element_text(size=9))
+      ggplot2::theme(title = ggplot2::element_text(size = 9, face = 'bold'), 
+                     axis.text.x = ggplot2::element_text(size = 9, angle = 45, hjust = 1),
+                     axis.text.y = ggplot2::element_text(size = 9))
   }
 
-partC <-
-## graph c)
-params$onde_df %>%
+partC <- params$onde_df %>%
   dplyr::filter(code_departement == params$code_departement) %>% 
   calculer_recurrence_assecs(onde_df = .) %>% 
   produire_graph_reccurrence_assecs(df_assecs = .)
 
-
-plot_historique <-
-  (partA/partB/partC) + 
+plot_historique <- (partA / partB / partC) + 
   patchwork::plot_layout(heights = c(1.7, 1.1, 2.3)) +
-  patchwork::plot_annotation(tag_levels = "a",tag_suffix = ')',
-                             #title = "Test",
-                             caption = paste("Source: réseau ONDE (OFB)\n ©OFB", 
-                                             format(Sys.time(), '%Y'), "- Date d'édition:",format(Sys.time(), '%d/%m/%Y'))) &
-  theme(plot.title = element_text(size = 8, face='bold'),
+  patchwork::plot_annotation(
+    tag_levels = "a", 
+    tag_suffix = ')',
+    caption = paste("Source: réseau ONDE (OFB)\n ©OFB", 
+                    format(Sys.time(), '%Y'), "- Date d'édition:", format(Sys.time(), '%d/%m/%Y'))
+  ) &
+  theme(plot.title = element_text(size = 8, face = 'bold'),
         plot.tag = element_text(face = 'bold'))
 
 plot_historique
-\newpageHistorique des observations par stations regroupées par Zones d'alerte PropluviaCi-dessous les stations ONDE du département sont réparties selon les zones d'alerte Propluvia auxquelles elles appartiennent (noms issus des  données Propluvia). Pour chaque station, l'historique retrace les observations des campagnes usuelles et complémentaires avec la typologie départementale définie précédemment.  Extrait de codeonde_dpt <- 
-  params$onde_df %>% 
+\newpageHistorique des observations par stations regroupées par Zones d'alerte PropluviaLes stations ONDE du département sont réparties selon les zones d'alerte Propluvia auxquelles elles appartiennent. Pour chaque station, l'historique retrace les observations des campagnes usuelles et complémentaires avec la typologie départementale.Extrait de codeonde_dpt <- params$onde_df %>% 
   dplyr::filter(code_departement == params$code_departement) %>% 
   dplyr::filter(etat_station == 'Active') %>% 
   dplyr::mutate(
     Annee = as.numeric(Annee),
     Mois = format(as.Date(date_campagne), "%m"), 
-    Mois_campagne = lubridate::ym(paste0(Annee,Mois,sep="-"))
+    Mois_campagne = lubridate::ym(paste0(Annee, "-", Mois))
   ) %>% 
   dplyr::mutate(
     lib_ecoul_dpt = dplyr::case_when(
@@ -340,22 +244,18 @@ plot_historique
     )
   )
 
-onde_dpt_propluvia <-
-  ajouter_zones_propluvia(onde_df = onde_dpt,
-                          propluvia_shape = propluvia_zone)
+onde_dpt_propluvia <- ajouter_zones_propluvia(onde_df = onde_dpt,
+                                              propluvia_shape = propluvia_zone)
 
 libelle_propluvia_dpt <- unique(onde_dpt_propluvia$libel)
 
-for (j in 1:length(libelle_propluvia_dpt)){
-  # section par zones d'alerte
-  cat("### Zones d'alerte: ", libelle_propluvia_dpt[j], "\n")
+for (j in 1:seq_along(libelle_propluvia_dpt)) {
+  cat("### Zones d'alerte : ", libelle_propluvia_dpt[j], "\n\n")
   
-  zones_df <-
-  onde_dpt_propluvia %>% 
+  zones_df <- onde_dpt_propluvia %>% 
     dplyr::filter(libel == libelle_propluvia_dpt[j])
   
-  graphs_stations <- 
-  purrr::map(
+  graphs_stations <- purrr::map(
     .x = unique(zones_df$code_station), 
     .f = produire_graph_pour_une_station_v2, 
     type_mod = lib_ecoul_dpt,
@@ -370,11 +270,8 @@ for (j in 1:length(libelle_propluvia_dpt)){
   ) %>% 
   purrr::set_names(unique(zones_df$code_station))
   
-  walk(.x = graphs_stations, ~ print(.x))
+  purrr::walk(.x = graphs_stations, ~ print(.x))
 
-  # saut de page
-  cat('\n')
-  cat('\n')
+  cat('\n\n\\newpage\n\n')
 }
-
-\newpageCommentaires spécifiques:::{custom-style="Style1"}Ajouter les éventuels commentaires ici
+\newpageCommentaires spécifiques:::{custom-style="Style1"}Ajouter les éventuels commentaires ici.:::

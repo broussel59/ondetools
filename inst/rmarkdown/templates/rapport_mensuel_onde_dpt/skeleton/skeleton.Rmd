@@ -252,9 +252,12 @@ library(tidyverse)
 library(lubridate)
 library(ondetools)
 
+# 0) Choisir ses départements
+mes_dpts <- c('59')
+
 # 1. Chargement et calcul des indices ONDE
-chemin_data <- "C:/Users/baptiste.roussel/Desktop/Gestion quantitative/ONDE/R_rapports_mensuels/graph_59/raw_data"
-load(file.path(chemin_data, "onde_df.RData"))
+
+onde_df <- telecharger_donnees_onde_api(dpt = mes_dpts)
 
 indices_df <- calculer_indice_onde(onde_df = onde_df, force_complementaire = FALSE)
 

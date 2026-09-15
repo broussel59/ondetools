@@ -45,7 +45,7 @@ produire_graph_indice_mensuel <- function(onde_df, code_dpt, mois_cible = 5, for
 
   # Sécurité si aucune donnée pour le département/mois
   if (nrow(df_plot) == 0 || all(is.na(df_plot$indice))) {
-    warning(paste("Aucune donnée valide pour le département", code_dpt, "et le mois", mois_cible))
+    warning(paste("Aucune donnee valide pour le departement", code_dpt, "et le mois", mois_cible))
     return(NULL)
   }
 
@@ -95,9 +95,9 @@ produire_graph_indice_mensuel <- function(onde_df, code_dpt, mois_cible = 5, for
     ) +
     ggplot2::labs(
       title = paste0("Indice ONDE mensuel - Mois ", sprintf("%02d", mois_cible),
-                     " (Dép. ", code_dpt, " - Campagnes ",
+                     " (Dep. ", code_dpt, " - Campagnes ",
                      ifelse(force_complementaire, "toutes", "usuelles"), ")"),
-      x = "Année",
+      x = "Annee",
       y = "Indice ONDE"
     ) +
     ggplot2::theme_minimal(base_size = 12) +

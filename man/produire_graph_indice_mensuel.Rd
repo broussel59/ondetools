@@ -27,6 +27,8 @@ graphique ggplot
 produire graph inidice mensuel
 }
 \examples{
-produire_graph_indice_mensuel(onde_df, code_dpt = '59', mois_cible = 5, force_complementaire = FALSE)
-
+\dontrun{
+produire_graph_indice_mensuel(onde_df,
+code_dpt = '59', mois_cible = 5, force_complementaire = FALSE)
+}
 }

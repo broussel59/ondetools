@@ -61,6 +61,9 @@ utils::globalVariables(
     'dpt',
     'label_sta',
     'modalite',
-    'onde_df_geo'
+    'onde_df_geo',
+    'date_ref',
+    'indice_moyen',
+    'etiquette_derniere'
   )
 )

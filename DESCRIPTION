@@ -49,7 +49,6 @@ Imports:
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: bzip2
-RoxygenNote: 7.3.1
 Suggests: 
     knitr,
     flextable,
@@ -62,3 +61,4 @@ Depends:
 Remotes: 
     MaelTheuliere/COGiter,
     inrae/hubeau
+Config/roxygen2/version: 8.1.0

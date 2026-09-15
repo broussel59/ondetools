@@ -18,6 +18,7 @@ export(passer_en_format_large)
 export(produire_carte_dynamique)
 export(produire_carte_statique)
 export(produire_graph_heatmap_assecs)
+export(produire_graph_indice_mensuel)
 export(produire_graph_pour_toutes_les_stations)
 export(produire_graph_pour_une_station)
 export(produire_graph_pour_une_station_v2)
@@ -26,116 +27,150 @@ export(produire_graph_type_ecoulement)
 export(produire_rapport_mensuel_dpt)
 export(telecharger_donnees_onde_api)
 export(telecharger_fichiers_onde_annuels)
-importFrom(cli,cli_alert_success)
-importFrom(cli,cli_h1)
-importFrom(data.table,fread)
-importFrom(data.table,rleid)
-importFrom(dplyr,across)
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,case_when)
-importFrom(dplyr,desc)
-importFrom(dplyr,distinct)
-importFrom(dplyr,everything)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,if_else)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,n)
-importFrom(dplyr,pull)
-importFrom(dplyr,recode)
-importFrom(dplyr,row_number)
-importFrom(dplyr,select)
-importFrom(dplyr,summarise)
-importFrom(dplyr,ungroup)
-importFrom(forcats,fct_recode)
-importFrom(forcats,fct_rev)
+importFrom(cli,
+  cli_alert_success,
+  cli_h1
+)
+importFrom(data.table,
+  fread,
+  rleid
+)
+importFrom(dplyr,
+  across,
+  arrange,
+  bind_rows,
+  case_when,
+  desc,
+  distinct,
+  everything,
+  filter,
+  group_by,
+  if_else,
+  left_join,
+  mutate,
+  n,
+  pull,
+  recode,
+  row_number,
+  select,
+  summarise,
+  ungroup
+)
+importFrom(forcats,
+  fct_recode,
+  fct_rev
+)
 importFrom(furrr,future_walk)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,coord_flip)
-importFrom(ggplot2,coord_sf)
-importFrom(ggplot2,element_blank)
-importFrom(ggplot2,element_line)
-importFrom(ggplot2,element_rect)
-importFrom(ggplot2,element_text)
-importFrom(ggplot2,facet_grid)
-importFrom(ggplot2,geom_bar)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_sf)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,geom_tile)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,ggsave)
-importFrom(ggplot2,ggtitle)
-importFrom(ggplot2,guide_legend)
-importFrom(ggplot2,guides)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,position_stack)
-importFrom(ggplot2,scale_color_manual)
-importFrom(ggplot2,scale_fill_gradientn)
-importFrom(ggplot2,scale_fill_manual)
-importFrom(ggplot2,scale_size)
-importFrom(ggplot2,scale_x_continuous)
-importFrom(ggplot2,scale_y_continuous)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,theme_bw)
-importFrom(ggplot2,theme_void)
-importFrom(ggplot2,unit)
-importFrom(ggplot2,xlab)
-importFrom(ggplot2,ylab)
+importFrom(ggplot2,
+  aes,
+  coord_flip,
+  coord_sf,
+  element_blank,
+  element_line,
+  element_rect,
+  element_text,
+  facet_grid,
+  geom_bar,
+  geom_point,
+  geom_sf,
+  geom_text,
+  geom_tile,
+  ggplot,
+  ggsave,
+  ggtitle,
+  guide_legend,
+  guides,
+  labs,
+  position_stack,
+  scale_color_manual,
+  scale_fill_gradientn,
+  scale_fill_manual,
+  scale_size,
+  scale_x_continuous,
+  scale_y_continuous,
+  theme,
+  theme_bw,
+  theme_void,
+  unit,
+  xlab,
+  ylab
+)
 importFrom(ggrepel,geom_text_repel)
-importFrom(ggspatial,annotation_north_arrow)
-importFrom(ggspatial,annotation_scale)
+importFrom(ggspatial,
+  annotation_north_arrow,
+  annotation_scale
+)
 importFrom(glue,glue)
-importFrom(grDevices,adjustcolor)
-importFrom(grDevices,hcl.colors)
-importFrom(hubeau,get_ecoulement_campagnes)
-importFrom(hubeau,get_ecoulement_observations)
-importFrom(hubeau,get_ecoulement_stations)
-importFrom(hubeau,list_params)
+importFrom(grDevices,
+  adjustcolor,
+  hcl.colors
+)
+importFrom(hubeau,
+  get_ecoulement_campagnes,
+  get_ecoulement_observations,
+  get_ecoulement_stations,
+  list_params
+)
 importFrom(leafpop,popupGraph)
-importFrom(lubridate,as_date)
-importFrom(lubridate,month)
-importFrom(lubridate,year)
-importFrom(lubridate,ym)
-importFrom(lubridate,ymd)
+importFrom(lubridate,
+  as_date,
+  month,
+  year,
+  ym,
+  ymd
+)
 importFrom(magrittr,"%>%")
 importFrom(mapview,mapview)
-importFrom(progressr,progressor)
-importFrom(progressr,with_progress)
-importFrom(purrr,map)
-importFrom(purrr,map_df)
-importFrom(purrr,pwalk)
-importFrom(purrr,reduce)
+importFrom(progressr,
+  progressor,
+  with_progress
+)
+importFrom(purrr,
+  map,
+  map_df,
+  pwalk,
+  reduce
+)
 importFrom(rlang,":=")
 importFrom(rmarkdown,render)
-importFrom(rvest,html_attr)
-importFrom(rvest,html_nodes)
-importFrom(scales,breaks_width)
-importFrom(scales,percent_format)
-importFrom(sf,st_as_sf)
-importFrom(sf,st_as_sfc)
-importFrom(sf,st_bbox)
-importFrom(sf,st_buffer)
-importFrom(sf,st_crs)
-importFrom(sf,st_geometry)
-importFrom(sf,st_intersection)
-importFrom(sf,st_join)
-importFrom(sf,st_read)
-importFrom(sf,st_transform)
+importFrom(rvest,
+  html_attr,
+  html_nodes
+)
+importFrom(scales,
+  breaks_width,
+  percent_format
+)
+importFrom(sf,
+  st_as_sf,
+  st_as_sfc,
+  st_bbox,
+  st_buffer,
+  st_crs,
+  st_geometry,
+  st_intersection,
+  st_join,
+  st_read,
+  st_transform
+)
 importFrom(stats,setNames)
-importFrom(stringr,str_extract)
-importFrom(stringr,str_pad)
-importFrom(stringr,str_replace_all)
-importFrom(stringr,str_split)
-importFrom(stringr,str_squish)
-importFrom(stringr,str_subset)
-importFrom(stringr,str_wrap)
-importFrom(tidyr,complete)
-importFrom(tidyr,replace_na)
-importFrom(tidyr,spread)
-importFrom(utils,download.file)
-importFrom(utils,glob2rx)
-importFrom(utils,unzip)
+importFrom(stringr,
+  str_extract,
+  str_pad,
+  str_replace_all,
+  str_split,
+  str_squish,
+  str_subset,
+  str_wrap
+)
+importFrom(tidyr,
+  complete,
+  replace_na,
+  spread
+)
+importFrom(utils,
+  download.file,
+  glob2rx,
+  unzip
+)
 importFrom(xml2,read_html)
